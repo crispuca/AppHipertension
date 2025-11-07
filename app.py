@@ -5,7 +5,7 @@ import joblib
 import altair as alt
 import random
 
-st.set_page_config(page_title="Predicción de Hipertensión – ENS 2025", page_icon="🩺", layout="wide")
+st.set_page_config(page_title="Predicción de Hipertensión ", page_icon="🩺", layout="wide")
 
 PALETTE = ["#5B8E7D","#D96C6C","#6C78D9","#E6B655"]
 
@@ -16,8 +16,8 @@ def cargar_modelo():
 
 modelo = cargar_modelo()
 
-st.title("🩺 Predicción de Hipertensión – Modelo Final (ElasticNet Logistic Regression)")
-st.caption("Aplicación interactiva basada en el modelo entrenado durante el análisis ENS 2025.")
+st.title("Predicción de Hipertensión")
+st.caption("Aplicación interactiva basada en el modelo entrenado durante el análisis del portal de datos abiertos de Chile")
 
 # ------------------ MODO EXPLORACIÓN ------------------
 st.header("📊 Exploración de datos y relaciones")
@@ -33,7 +33,7 @@ if uploaded_file is not None:
     df["Probabilidad_Hipertension"] = y_prob
     df["Prediccion"] = np.where(y_prob >= 0.5, "Hipertenso", "No Hipertenso")
 
-    st.success("✅ Predicciones generadas con el modelo final.")
+    st.success("Predicciones generadas con el modelo final.")
 
     # Mostrar resumen
     st.metric("Promedio de probabilidad predicha", f"{df['Probabilidad_Hipertension'].mean():.2%}")
@@ -92,7 +92,7 @@ if uploaded_file is not None:
 
 
 # ------------------ MODO PREDICCIÓN ------------------
-st.header("🧮 Predicción individual")
+st.header("Predicción individual")
 st.markdown("Completá los campos para obtener una predicción:")
 
 col1, col2, col3 = st.columns(3)
