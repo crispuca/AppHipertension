@@ -20,10 +20,11 @@ st.title("Predicción de Hipertensión")
 st.caption("Aplicación interactiva basada en el modelo entrenado durante el análisis del portal de datos abiertos de Chile")
 
 # ------------------ PESTAÑAS ------------------
-tab_prediccion, tab_visualizacion, tab_recomendaciones = st.tabs([
+tab_prediccion, tab_visualizacion, tab_recomendaciones, tab_informeProyecto= st.tabs([
     "Predicción individual",
     "Visualización con dataset cargado",
-    "Recomendaciones"
+    "Recomendaciones",
+    "informe del Proyecto"
 ])
 
 # PESTAÑA 1: PREDICCIÓN INDIVIDUAL
@@ -130,6 +131,7 @@ with tab_visualizacion:
 
             st.metric("Promedio de probabilidad predicha", f"{df['Probabilidad_Hipertension'].mean():.2%}")
 
+            
 
             if {"actividad_fisica", "habito_fumar", "diabetes", "enfermedad_renal", "Prediccion"}.issubset(df.columns):
                 # Corregir hábito de fumar
@@ -212,7 +214,11 @@ with tab_visualizacion:
                         labelFontSize=12
                     )
                     .properties(
-                        title="Comparación de Factores de Riesgo y su Influencia en la Hipertensión"
+                        title=alt.TitleParams(
+                            text="Comparación de Factores de Riesgo y su Influencia en la Hipertensión",
+                            # Este es el campo correcto para el subtítulo
+                            subtitle="En este gráfico mostraremos cómo la actividad física, la diabetes, la enfermedad renal y el hábito de fumar influyen en la población a la hora de predecir si es probable que sea hipertenso o no"
+                        )                    
                     )
                     .resolve_scale(y="shared")
                 )
@@ -466,3 +472,94 @@ with tab_recomendaciones:
 
     else:
         st.info("Las recomendaciones personalizadas se habilitarán cuando el resultado sea **Hipertenso**.")
+
+
+# PESTAÑA 4: Informe de Proyecto
+with tab_informeProyecto:
+    st.header("💡 Informe del Proyecto")
+    
+    st.subheader("Nombre del Proyecto:")
+    st.title("Modelo de Predicción de Hipertensión en Personas según Hábitos y Nivel de Vida")
+    
+    st.markdown("""
+    ---
+    ## 🎯 Objetivos y Utilidad
+    
+    Este proyecto fue desarrollado con el objetivo principal de **proveer una herramienta de detección temprana** del riesgo de hipertensión arterial (HTA) utilizando datos de estilo de vida, demográficos y de salud (factores de riesgo).
+    
+    ### ¿Por qué es útil?
+    
+    * **Prevención Temprana:** Permite identificar a individuos con alto riesgo de HTA antes de que la enfermedad se manifieste o genere complicaciones severas.
+    * **Personalización de Intervenciones:** Al conocer los factores específicos que elevan el riesgo, las autoridades sanitarias y los profesionales pueden dirigir campañas de prevención más efectivas y personalizadas.
+    * **Optimización de Recursos:** Enfocar recursos de seguimiento y diagnóstico en la población de mayor riesgo.
+    
+    ---
+    """)
+
+    st.header("📊 Factores Fundamentales en la Predicción")
+    st.subheader("Importancia de las Variables")
+
+    # Muestra la imagen de Importancia de Variables
+    st.image(
+        "data/assets/variables_influyentes.png", 
+        caption="Importancia de las variables por Peso Absoluto (magnitud del efecto)",
+        use_column_width=True
+    )
+    
+    st.markdown("""
+    El gráfico anterior muestra el **Peso Absoluto** o la **Magnitud del Efecto** que cada factor tiene en el resultado de la predicción, destacando las que tienen mayor influencia.
+    
+    ### 🥇 Variables de Mayor Impacto (Predictores Clave)
+
+    Las variables con el mayor "Peso absoluto" ejercen la **mayor influencia** en la probabilidad de que un individuo sea clasificado como hipertenso o no hipertenso.
+    
+    1.  **`num_edad` (Edad numérica):** Con el peso más alto (alrededor de 1.1), la **edad es el factor predictivo fundamental**. Esto es consistente con el conocimiento médico, ya que el riesgo de hipertensión aumenta significativamente con la edad.
+    2.  **`cat_ocupacion_Rentista` (Ocupación: Rentista):** El segundo factor más relevante (alrededor de 0.95), lo que sugiere que esta categoría ocupacional (a menudo asociada con mayor edad o menor actividad física laboral) tiene un impacto muy alto.
+    
+    ### 🥈 Factores de Salud y Sueño
+    
+    Los siguientes factores refuerzan la relevancia del estado de salud y los hábitos:
+    
+    * **`cat_sueño_simple_Muy Bien`:** Un peso alto indica que una **excelente calidad de sueño** es un factor protector.
+    * **`cat_diabetes_Sí` / `cat_diabetes_No`:** El estado de diabetes es un predictor muy fuerte debido a la conocida comorbilidad entre ambas condiciones.
+    * **`cat_sueño_simple_Muy Mal`:** Una pésima calidad de sueño también figura como un factor importante, lo que subraya la necesidad de considerar la salud del sueño en la evaluación de riesgo.
+
+    La gráfica confirma que, si bien la **edad** es el predictor dominante, el modelo captura la compleja interacción de **condiciones sociolaborales** y **hábitos de salud** para una predicción más robusta.
+
+    ---
+    ## 🧠 El Modelo: Elastic Net (Regresión Logística)
+    
+    Elegimos la **Regresión Logística con regularización Elastic Net** por ser una opción que ofrece un equilibrio excepcional entre el poder predictivo y la interpretabilidad de los resultados.
+    
+    ### Justificación basada en el ROC-AUC
+    """)
+    st.image(
+    "data/assets/curva_roc.png", 
+    caption="Curva ROC de ejemplo y valor AUC para evaluar el modelo.", 
+    use_column_width=True
+    )
+    st.markdown("""
+    La métrica principal utilizada para seleccionar este modelo fue el **Área bajo la Curva ROC (ROC-AUC)**.
+    
+    ***¿Qué es el ROC-AUC?** Es una métrica de rendimiento que evalúa la capacidad de un modelo para distinguir entre las clases positivas (hipertenso) y negativas (no hipertenso). Un valor de **1.0** representa una predicción perfecta, mientras que **0.5** indica una predicción aleatoria.
+    * **¿Por qué Elastic Net?** El modelo Elastic Net alcanzó un alto valor de ROC-AUC (**[0,823]**), demostrando una gran capacidad predictiva. Además, la regularización Elastic Net nos permite:
+        * **Seleccionar Variables Clave (Lasso/L1):** Ceros o minimiza el impacto de variables menos relevantes, ayudando a que el modelo se enfoque en los factores de riesgo más importantes.
+        * **Manejar Colinealidad (Ridge/L2):** Mejora la estabilidad del modelo, previniendo el sobreajuste (*overfitting*) al manejar la posible correlación entre múltiples factores de riesgo (ej: la edad y otros hábitos de salud).
+    
+    
+    
+    ---
+    ## 🚀 Desafíos y Futuras Aplicaciones
+    
+    ### Desafíos de la Aplicación
+    
+    1.  **Dependencia de la Calidad de los Datos:** La precisión del modelo está limitada por la calidad, sesgos y representatividad de los datos originales del portal de datos abiertos de Chile.
+    2.  **Generalización:** El modelo está optimizado para la población de Chile. Su aplicación directa a otras poblaciones con hábitos y sistemas de salud muy diferentes podría requerir un ajuste o reentrenamiento.
+    3.  **No es un Diagnóstico:** Es fundamental recordar que la aplicación provee una **estimación de riesgo** y no reemplaza la consulta ni el diagnóstico clínico de un médico.
+    
+    ### Objetivos Futuros
+    
+    * **Integración Clínica:** Desarrollar una API que pueda ser consumida por sistemas de información de salud para facilitar la evaluación de riesgo en consultas médicas.
+    * **Actualización Continua:** Integrar un proceso de actualización periódica del modelo con datos más recientes para mantener la relevancia y precisión predictiva.
+    * **Análisis de Sensibilidad:** Realizar un análisis más profundo de la sensibilidad del modelo ante cambios pequeños en factores de estilo de vida para dar recomendaciones más detalladas.
+    """)
