@@ -414,36 +414,53 @@ with tab_visualizacion:
 
                 st.altair_chart(chart_edad_sexo, use_container_width=True)
 
-            #  Gráfico 2: Hábito de fumar vs Actividad física
-            if {"habito_fumar", "actividad_fisica", "Prediccion"}.issubset(df.columns):
-                df_habitos = (
-                    df.groupby(["habito_fumar", "actividad_fisica"])
-                    .agg(tasa=("Prediccion", lambda x: (x == "Hipertenso").mean()))
-                    .reset_index()
-                )
-
-                chart_habitos = (
-                    alt.Chart(df_habitos)
-                    .mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5)
-                    .encode(
-                        # X: Divide la gráfica en los dos grupos principales
-                        x=alt.X("actividad_fisica:N", title="Actividad Física", axis=None), 
-                        # Y: La altura de la barra es la tasa de hipertensión
-                        y=alt.Y("tasa:Q", title="Tasa de Hipertensión", axis=alt.Axis(format=".0%")), 
-                        # Color: Usa el hábito de fumar para distinguir el color 
-                        color=alt.Color("actividad_fisica:N", title="Actividad Física", scale=alt.Scale(range=["#D96C6C", "#5B8E7D"])), 
-                        # Column: Crea dos paneles separados por el hábito de fumar
-                        column=alt.Column(
-                            "habito_fumar:N", 
-                            title="Hábito de Fumar",
-                            # 💡 ALINEACIÓN Y ORIENTACIÓN DEFINIDA DIRECTAMENTE EN EL ENCABEZADO
-                             header=alt.Header(titleOrient="bottom", titleAlign="center")
-                        ),
+                # Gráfico hábito de fumar vs Actividad física (MAPA DE CALOR)
+                if {"habito_fumar", "actividad_fisica", "Prediccion"}.issubset(df.columns):
+                    df_habitos = (
+                        df.groupby(["habito_fumar", "actividad_fisica"])
+                        .agg(tasa=("Prediccion", lambda x: (x == "Hipertenso").mean()))
+                        .reset_index()
                     )
-                    .properties(title="Tasa de Hipertensión por Hábito de Fumar y Actividad Física", height=400)
-                )
+                    # Definición de Colores
+                    VERDE_BAJO_RIESGO = "#5B8E7D"  # Verde oscuro o similar para riesgo bajo
+                    ROJO_ALTO_RIESGO = "#D96C6C"   # Rojo o similar para riesgo alto
+                    AMARILLO_MODERADO = "#F3CE52"
 
-                st.altair_chart(chart_habitos, use_container_width=True)
+                    chart_habitos = (
+                        # 1. 📌 CAMBIO: Usar .mark_rect() para el mapa de calor
+                        alt.Chart(df_habitos)
+                        .mark_rect() 
+                        .encode(
+                            # 2. X: Actividad Física
+                            x=alt.X("actividad_fisica:N", title="Actividad Física",sort=["Sí","No"]), 
+                            
+                            # 3. Y: Hábito de Fumar (antes era la columna)
+                            y=alt.Y("habito_fumar:N", title="Hábito de Fumar", sort=["No","Sí"]), 
+                            
+                            # 4. 📌 COLOR: La variable cuantitativa 'tasa' controlará el color
+                            color=alt.Color(
+                                    "tasa:Q", 
+                                    title="Tasa de Hipertensión", 
+                                    scale=alt.Scale(
+                                        # 📌 Dominio: Define los valores mínimo y máximo de la escala de datos
+                                        domain=[0.30, 0.60], 
+                                        # 📌 Rango: Asigna el color al valor mínimo (Verde) y al valor máximo (Rojo)
+                                        range=[VERDE_BAJO_RIESGO, AMARILLO_MODERADO, ROJO_ALTO_RIESGO]
+                                    ),
+                                    legend=alt.Legend(format=".1%")
+                            ),
+                            # 5. 📌 TOOLTIP: Mostrar la tasa en porcentaje
+                            tooltip=[
+                                alt.Tooltip("actividad_fisica:N", title="Actividad Física"),
+                                alt.Tooltip("habito_fumar:N", title="Hábito de Fumar"),
+                                alt.Tooltip("tasa:Q", title="Tasa de Hipertensión", format=".1%")
+                            ]
+                            # La codificación 'column' y 'y' anteriores se han eliminado/movido
+                        )
+                        .properties(title="Tasa de Hipertensión por Hábito de Fumar y Actividad Física", height=400)
+                    )
+
+                    st.altair_chart(chart_habitos, use_container_width=True)
 
 
         except Exception as e:
