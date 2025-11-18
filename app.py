@@ -308,17 +308,21 @@ with tab_visualizacion:
                     alt.Chart(df_habitos)
                     .mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5)
                     .encode(
-                        x=alt.X("habito_fumar:N", title="Hábito de fumar", sort=["No", "Sí"]),
-                        y=alt.Y("tasa:Q", title="Tasa de Hipertensión", axis=alt.Axis(format=".0%")),
-                        color=alt.Color("actividad_fisica:N", title="Actividad Física",
-                                        scale=alt.Scale(range=["#D96C6C", "#5B8E7D"])),
-                        tooltip=[
-                            alt.Tooltip("habito_fumar:N", title="Hábito de fumar"),
-                            alt.Tooltip("actividad_fisica:N", title="Actividad Física"),
-                            alt.Tooltip("tasa:Q", title="Tasa de hipertensión", format=".1%")
-                        ]
+                        # X: Divide la gráfica en los dos grupos principales
+                        x=alt.X("actividad_fisica:N", title="Actividad Física", axis=None), 
+                        # Y: La altura de la barra es la tasa de hipertensión
+                        y=alt.Y("tasa:Q", title="Tasa de Hipertensión", axis=alt.Axis(format=".0%")), 
+                        # Color: Usa el hábito de fumar para distinguir el color 
+                        color=alt.Color("actividad_fisica:N", title="Actividad Física", scale=alt.Scale(range=["#D96C6C", "#5B8E7D"])), 
+                        # Column: Crea dos paneles separados por el hábito de fumar
+                        column=alt.Column(
+                            "habito_fumar:N", 
+                            title="Hábito de Fumar",
+                            # 💡 ALINEACIÓN Y ORIENTACIÓN DEFINIDA DIRECTAMENTE EN EL ENCABEZADO
+                             header=alt.Header(titleOrient="bottom", titleAlign="center")
+                        ),
                     )
-                    .properties(title="Relación entre Fumar, Actividad Física y Riesgo de Hipertensión", height=400)
+                    .properties(title="Tasa de Hipertensión por Hábito de Fumar y Actividad Física", height=400)
                 )
 
                 st.altair_chart(chart_habitos, use_container_width=True)
@@ -499,6 +503,10 @@ with tab_informeProyecto:
     st.header("📊 Factores Fundamentales en la Predicción")
     st.subheader("Importancia de las Variables")
 
+    st.markdown("""
+    En esta seccion vamos a ver un ranking dentro de nuestro modelo de como influye cada variable para la prediccion de hipertension, este
+    ranking no explica que las que esten abajo son las que descartamos, sino muestra la influencia de las mismas
+    """)
     # Muestra la imagen de Importancia de Variables
     st.image(
         "data/assets/variables_influyentes.png", 
