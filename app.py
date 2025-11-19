@@ -329,7 +329,7 @@ with tab_visualizacion:
             if {"consume_alcohol_bin", "habito_fumar", "diabetes", "enfermedad_renal", "Prediccion"}.issubset(df.columns):
                 # Corregir hábito de fumar
                 df["habito_fumar_corrigido"] = df["habito_fumar"].replace({"Sí": "No", "No": "Sí"})
-                df["consume_alcohol_bin"] = df["consume_alcohol_bin"].replace({"Consume": "No", "No Consume": "Sí"}) 
+                df["consume_alcohol_bin"] = df["consume_alcohol_bin"].replace({"Consume": "Sí", "No Consume": "No"}) 
 
                 # Reorganizar datos
                 df_riesgos = df.melt(
