@@ -287,8 +287,6 @@ with tab_visualizacion:
 
             st.success("Predicciones generadas correctamente ✅")
 
-            st.metric("Promedio de probabilidad predicha", f"{df['Probabilidad_Hipertension'].mean():.2%}")
-
             # DISTRIBUCIÓN GENERAL DE HIPERTENSIÓN
             if "Prediccion" in df.columns:
                 st.subheader("🩺 Distribución General de Hipertensión en el Dataset")
