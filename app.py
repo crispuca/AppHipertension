@@ -597,18 +597,19 @@ with tab_informeProyecto:
     
     Elegimos la **Regresión Logística con regularización Elastic Net** por ser una opción que ofrece un equilibrio excepcional entre el poder predictivo y la interpretabilidad de los resultados.
     
-    ### Justificación basada en el ROC-AUC
+    ### Justificación basada en la senbilidad(Recall)
     """)
     st.image(
     "data/assets/curva_roc.png", 
-    caption="Curva ROC de ejemplo y valor AUC para evaluar el modelo.", 
+    caption="Recall para evaluar el modelo.", 
     use_column_width=True
     )
     st.markdown("""
-    La métrica principal utilizada para seleccionar este modelo fue el **Área bajo la Curva ROC (ROC-AUC)**.
+     La métrica principal utilizada para seleccionar este modelo fue el **Recall (Sensibilidad)**.
     
-    ***¿Qué es el ROC-AUC?** Es una métrica de rendimiento que evalúa la capacidad de un modelo para distinguir entre las clases positivas (hipertenso) y negativas (no hipertenso). Un valor de **1.0** representa una predicción perfecta, mientras que **0.5** indica una predicción aleatoria.
-    * **¿Por qué Elastic Net?** El modelo Elastic Net alcanzó un alto valor de ROC-AUC (**[0,823]**), demostrando una gran capacidad predictiva. Además, la regularización Elastic Net nos permite:
+    ***¿Qué es el Recall?***
+       El recall mide la capacidad del modelo para identificar correctamente los casos positivos (personas con hipertensión). Es decir, de todos los verdaderos hipertensos, ¿cuántos logró detectar el modelo? Un valor de **1.0** indica que el modelo identificó todos los casos positivos, mientras que un valor bajo sugiere que está pasando por alto muchos pacientes con la condición.
+    * **¿Por qué Elastic Net?** El modelo Elastic Net alcanzó un alto valor de Recall (**[0,710]**), demostrando una gran capacidad predictiva. Además, la regularización Elastic Net nos permite:
         * **Seleccionar Variables Clave (Lasso/L1):** Ceros o minimiza el impacto de variables menos relevantes, ayudando a que el modelo se enfoque en los factores de riesgo más importantes.
         * **Manejar Colinealidad (Ridge/L2):** Mejora la estabilidad del modelo, previniendo el sobreajuste (*overfitting*) al manejar la posible correlación entre múltiples factores de riesgo (ej: la edad y otros hábitos de salud).
     
