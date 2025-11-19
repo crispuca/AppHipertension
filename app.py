@@ -20,10 +20,10 @@ st.title("Predicción de Hipertensión")
 st.caption("Aplicación interactiva basada en el modelo entrenado durante el análisis del portal de datos abiertos de Chile")
 
 # ------------------ PESTAÑAS ------------------
-tab_prediccion, tab_visualizacion, tab_recomendaciones, tab_informeProyecto= st.tabs([
+tab_prediccion,tab_recomendaciones, tab_visualizacion, tab_informeProyecto= st.tabs([
     "Predicción individual",
-    "Visualización con dataset cargado",
     "Recomendaciones",
+    "Visualización con dataset cargado",
     "informe del Proyecto"
 ])
 
@@ -173,9 +173,104 @@ with tab_prediccion:
                 "Revisiones de rutina, manten una dieta baja en sodio, evita los alimentos ultraprocesados y regula tu estres y sueño"
             )
 
+# PESTAÑA 2: RECOMENDACIONES
+with tab_recomendaciones:
+    st.header("💡 Recomendaciones")
+
+    pred_guardada = st.session_state.get("ultima_prediccion", None)
+    prob_guardada = st.session_state.get("ultima_probabilidad", None)
+
+    if pred_guardada == "Hipertenso":
+        st.warning(f"⚠️ Tu probabilidad estimada fue de **{prob_guardada:.2%}**. A continuación se muestran hábitos preventivos:")
+
+        data_consejos = pd.DataFrame({
+            "Hábito": [
+                "Actividad física regular",
+                "No fumar",
+                "Buena calidad de sueño",
+                "Dieta equilibrada",
+                "Chequeos médicos anuales"
+            ],
+            "Reducción de riesgo (%)": [30, 25, 15, 20, 10]
+        })
+
+        chart_consejos = (
+            alt.Chart(data_consejos)
+            .mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6)
+            .encode(
+                x=alt.X("Hábito:N", sort='-y', title="Hábito saludable", axis=alt.Axis(labelAngle=0, labelFontSize=13)),
+                y=alt.Y("Reducción de riesgo (%):Q", title="Reducción estimada del riesgo"),
+                color=alt.value("#561DBF"),
+                tooltip=["Hábito", "Reducción de riesgo (%)"]
+            )
+            .properties(title="Hábitos saludables que ayudan a reducir el riesgo", height=400)
+        )
+
+        text = chart_consejos.mark_text(
+            align='center', baseline='bottom', dy=-5, fontSize=13, fontWeight='bold', color='white'
+        ).encode(
+            text=alt.Text("Reducción de riesgo (%):Q", format=".0f")
+        )
+
+        st.altair_chart(chart_consejos + text, use_container_width=True)
+
+        st.markdown("### Recursos sobre la hipertensión")
+
+        st.markdown("""
+            <style>
+            .link-card {
+                background-color: #1e1e1e;
+                border-radius: 10px;
+                padding: 15px;
+                margin: 10px 0;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            }
+            .link-card a {
+                text-decoration: none;
+                color: #4da6ff;
+                font-size: 18px;
+                font-weight: bold;
+            }
+            .link-card p {
+                color: #ccc;
+                font-size: 14px;
+            }
+            </style>
+
+            <div class="link-card">
+                <a href="https://www.caeme.org.ar/hipertension-10-consejos-para-cuidar-la-presion-arterial/" target="_blank">🩺 Consejos para la hipertensión – CAEME</a>
+                <p>10 consejos prácticos para cuidar tu presión arterial según CAEME.</p>
+            </div>
+
+            <div class="link-card">
+                <a href="https://www.fundacioncardiologica.org/" target="_blank">❤️ Fundación Cardiológica Argentina</a>
+                <p>Información confiable sobre prevención y tratamiento de enfermedades cardíacas.</p>
+            </div>
+
+            <div class="link-card">
+                <a href="https://www.who.int/es/news-room/fact-sheets/detail/hypertension" target="_blank">🌍 OMS – Información sobre hipertensión</a>
+                <p>Datos globales y recomendaciones oficiales de la Organización Mundial de la Salud.</p>
+            </div>
+
+            <div class="link-card">
+                <a href="https://saha.org.ar/" target="_blank">🌿 Sociedad Argentina de Hipertensión Arterial</a>
+                <p>Asociación científica argentina especializada en la investigación de la hipertensión.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.info(random.choice([
+            "💪 Caminar 30 minutos al día puede reducir la presión arterial significativamente.",
+            "🍎 Evitá comidas ultraprocesadas y reducí el consumo de sal.",
+            "🧘 Dormir bien (6–8h) es esencial para mantener la presión controlada.",
+            "🚭 Si fumás, dejarlo puede reducir tu riesgo en un 25% en pocos meses.",
+            "💉 Controlá tu presión regularmente aunque te sientas bien."
+        ]))
+
+    else:
+        st.info("Las recomendaciones personalizadas se habilitarán cuando el resultado sea **Hipertenso**.")
 
 
-# PESTAÑA 2: VISUALIZACIÓN DE DATASET
+# PESTAÑA 3: VISUALIZACIÓN DE DATASET
 with tab_visualizacion:
     st.header("Visualización con dataset cargado automáticamente")
 
@@ -231,14 +326,15 @@ with tab_visualizacion:
                 st.caption("🧠 Este gráfico muestra el porcentaje de casos hipertensos vs no hipertensos en el conjunto analizado.")
 
             #Grafico de factores de riesgo, habito de fumar, enfermedad renal y diabetes
-            if {"habito_fumar", "diabetes", "enfermedad_renal", "Prediccion"}.issubset(df.columns):
+            if {"consume_alcohol_bin", "habito_fumar", "diabetes", "enfermedad_renal", "Prediccion"}.issubset(df.columns):
                 # Corregir hábito de fumar
                 df["habito_fumar_corrigido"] = df["habito_fumar"].replace({"Sí": "No", "No": "Sí"})
+                df["consume_alcohol_bin"] = df["consume_alcohol_bin"].replace({"Consume": "No", "No Consume": "Sí"}) 
 
                 # Reorganizar datos
                 df_riesgos = df.melt(
                     id_vars=["Prediccion"],
-                    value_vars=["habito_fumar_corrigido", "diabetes", "enfermedad_renal"],
+                    value_vars=["consume_alcohol_bin","habito_fumar_corrigido", "diabetes", "enfermedad_renal"],
                     var_name="Factor_de_Riesgo",
                     value_name="Estado"
                 )
@@ -255,6 +351,7 @@ with tab_visualizacion:
 
                 # Nombres legibles
                 nombres_factores = {
+                    "consume_alcohol_bin": "Consume alcohol",
                     "habito_fumar_corrigido": "Hábito de fumar",
                     "diabetes": "Diabetes",
                     "enfermedad_renal": "Enfermedad renal"
@@ -414,53 +511,56 @@ with tab_visualizacion:
 
                 st.altair_chart(chart_edad_sexo, use_container_width=True)
 
-                # Gráfico hábito de fumar vs Actividad física (MAPA DE CALOR)
-                if {"habito_fumar", "actividad_fisica", "Prediccion"}.issubset(df.columns):
-                    df_habitos = (
-                        df.groupby(["habito_fumar", "actividad_fisica"])
-                        .agg(tasa=("Prediccion", lambda x: (x == "Hipertenso").mean()))
-                        .reset_index()
-                    )
-                    # Definición de Colores
-                    VERDE_BAJO_RIESGO = "#5B8E7D"  # Verde oscuro o similar para riesgo bajo
-                    ROJO_ALTO_RIESGO = "#D96C6C"   # Rojo o similar para riesgo alto
-                    AMARILLO_MODERADO = "#F3CE52"
+            # Gráfico hábito de fumar vs Actividad física (MAPA DE CALOR)
+            if {"habito_fumar", "actividad_fisica", "Prediccion"}.issubset(df.columns):
 
-                    chart_habitos = (
-                        # 1. 📌 CAMBIO: Usar .mark_rect() para el mapa de calor
-                        alt.Chart(df_habitos)
-                        .mark_rect() 
-                        .encode(
-                            # 2. X: Actividad Física
-                            x=alt.X("actividad_fisica:N", title="Actividad Física",sort=["Sí","No"]), 
-                            
-                            # 3. Y: Hábito de Fumar (antes era la columna)
-                            y=alt.Y("habito_fumar:N", title="Hábito de Fumar", sort=["No","Sí"]), 
-                            
-                            # 4. 📌 COLOR: La variable cuantitativa 'tasa' controlará el color
-                            color=alt.Color(
-                                    "tasa:Q", 
-                                    title="Tasa de Hipertensión", 
-                                    scale=alt.Scale(
-                                        # 📌 Dominio: Define los valores mínimo y máximo de la escala de datos
-                                        domain=[0.30, 0.60], 
-                                        # 📌 Rango: Asigna el color al valor mínimo (Verde) y al valor máximo (Rojo)
-                                        range=[VERDE_BAJO_RIESGO, AMARILLO_MODERADO, ROJO_ALTO_RIESGO]
-                                    ),
-                                    legend=alt.Legend(format=".1%")
-                            ),
-                            # 5. 📌 TOOLTIP: Mostrar la tasa en porcentaje
-                            tooltip=[
-                                alt.Tooltip("actividad_fisica:N", title="Actividad Física"),
-                                alt.Tooltip("habito_fumar:N", title="Hábito de Fumar"),
-                                alt.Tooltip("tasa:Q", title="Tasa de Hipertensión", format=".1%")
-                            ]
-                            # La codificación 'column' y 'y' anteriores se han eliminado/movido
-                        )
-                        .properties(title="Tasa de Hipertensión por Hábito de Fumar y Actividad Física", height=400)
-                    )
+                df["habito_fumar"] = df["habito_fumar"].replace({"Sí": "No", "No": "Sí"})
 
-                    st.altair_chart(chart_habitos, use_container_width=True)
+                df_habitos = (
+                    df.groupby(["habito_fumar", "actividad_fisica"])
+                    .agg(tasa=("Prediccion", lambda x: (x == "Hipertenso").mean()))
+                    .reset_index()
+                )
+                # Definición de Colores
+                VERDE_BAJO_RIESGO = "#5B8E7D"  # Verde oscuro o similar para riesgo bajo
+                ROJO_ALTO_RIESGO = "#D96C6C"   # Rojo o similar para riesgo alto
+                AMARILLO_MODERADO = "#F3CE52"
+
+                chart_habitos = (
+                    # 1. 📌 CAMBIO: Usar .mark_rect() para el mapa de calor
+                    alt.Chart(df_habitos)
+                    .mark_rect() 
+                    .encode(
+                        # 2. X: Actividad Física
+                        x=alt.X("actividad_fisica:N", title="Actividad Física",sort=["Sí","No"]), 
+                        
+                        # 3. Y: Hábito de Fumar (antes era la columna)
+                        y=alt.Y("habito_fumar:N", title="Hábito de Fumar", sort=["Sí","No"]), 
+                        
+                        # 4. 📌 COLOR: La variable cuantitativa 'tasa' controlará el color
+                        color=alt.Color(
+                                "tasa:Q", 
+                                title="Tasa de Hipertensión", 
+                                scale=alt.Scale(
+                                    # 📌 Dominio: Define los valores mínimo y máximo de la escala de datos
+                                    domain=[0.30, 0.60], 
+                                    # 📌 Rango: Asigna el color al valor mínimo (Verde) y al valor máximo (Rojo)
+                                    range=[VERDE_BAJO_RIESGO, AMARILLO_MODERADO, ROJO_ALTO_RIESGO]
+                                ),
+                                legend=alt.Legend(format=".1%")
+                        ),
+                        # 5. 📌 TOOLTIP: Mostrar la tasa en porcentaje
+                        tooltip=[
+                            alt.Tooltip("actividad_fisica:N", title="Actividad Física"),
+                            alt.Tooltip("habito_fumar:N", title="Hábito de Fumar"),
+                            alt.Tooltip("tasa:Q", title="Tasa de Hipertensión", format=".1%")
+                        ]
+                        # La codificación 'column' y 'y' anteriores se han eliminado/movido
+                    )
+                    .properties(title="Tasa de Hipertensión por Hábito de Fumar y Actividad Física", height=400)
+                )
+
+                st.altair_chart(chart_habitos, use_container_width=True)
 
 
         except Exception as e:
@@ -469,101 +569,6 @@ with tab_visualizacion:
         st.error(f"⚠️ No se pudo cargar el dataset: {e}")
         st.stop()
 
-# PESTAÑA 3: RECOMENDACIONES
-with tab_recomendaciones:
-    st.header("💡 Recomendaciones")
-
-    pred_guardada = st.session_state.get("ultima_prediccion", None)
-    prob_guardada = st.session_state.get("ultima_probabilidad", None)
-
-    if pred_guardada == "Hipertenso":
-        st.warning(f"⚠️ Tu probabilidad estimada fue de **{prob_guardada:.2%}**. A continuación se muestran hábitos preventivos:")
-
-        data_consejos = pd.DataFrame({
-            "Hábito": [
-                "Actividad física regular",
-                "No fumar",
-                "Buena calidad de sueño",
-                "Dieta equilibrada",
-                "Chequeos médicos anuales"
-            ],
-            "Reducción de riesgo (%)": [30, 25, 15, 20, 10]
-        })
-
-        chart_consejos = (
-            alt.Chart(data_consejos)
-            .mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6)
-            .encode(
-                x=alt.X("Hábito:N", sort='-y', title="Hábito saludable", axis=alt.Axis(labelAngle=0, labelFontSize=13)),
-                y=alt.Y("Reducción de riesgo (%):Q", title="Reducción estimada del riesgo"),
-                color=alt.value("#561DBF"),
-                tooltip=["Hábito", "Reducción de riesgo (%)"]
-            )
-            .properties(title="Hábitos saludables que ayudan a reducir el riesgo", height=400)
-        )
-
-        text = chart_consejos.mark_text(
-            align='center', baseline='bottom', dy=-5, fontSize=13, fontWeight='bold', color='white'
-        ).encode(
-            text=alt.Text("Reducción de riesgo (%):Q", format=".0f")
-        )
-
-        st.altair_chart(chart_consejos + text, use_container_width=True)
-
-        st.markdown("### Recursos sobre la hipertensión")
-
-        st.markdown("""
-            <style>
-            .link-card {
-                background-color: #1e1e1e;
-                border-radius: 10px;
-                padding: 15px;
-                margin: 10px 0;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            }
-            .link-card a {
-                text-decoration: none;
-                color: #4da6ff;
-                font-size: 18px;
-                font-weight: bold;
-            }
-            .link-card p {
-                color: #ccc;
-                font-size: 14px;
-            }
-            </style>
-
-            <div class="link-card">
-                <a href="https://www.caeme.org.ar/hipertension-10-consejos-para-cuidar-la-presion-arterial/" target="_blank">🩺 Consejos para la hipertensión – CAEME</a>
-                <p>10 consejos prácticos para cuidar tu presión arterial según CAEME.</p>
-            </div>
-
-            <div class="link-card">
-                <a href="https://www.fundacioncardiologica.org/" target="_blank">❤️ Fundación Cardiológica Argentina</a>
-                <p>Información confiable sobre prevención y tratamiento de enfermedades cardíacas.</p>
-            </div>
-
-            <div class="link-card">
-                <a href="https://www.who.int/es/news-room/fact-sheets/detail/hypertension" target="_blank">🌍 OMS – Información sobre hipertensión</a>
-                <p>Datos globales y recomendaciones oficiales de la Organización Mundial de la Salud.</p>
-            </div>
-
-            <div class="link-card">
-                <a href="https://saha.org.ar/" target="_blank">🌿 Sociedad Argentina de Hipertensión Arterial</a>
-                <p>Asociación científica argentina especializada en la investigación de la hipertensión.</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.info(random.choice([
-            "💪 Caminar 30 minutos al día puede reducir la presión arterial significativamente.",
-            "🍎 Evitá comidas ultraprocesadas y reducí el consumo de sal.",
-            "🧘 Dormir bien (6–8h) es esencial para mantener la presión controlada.",
-            "🚭 Si fumás, dejarlo puede reducir tu riesgo en un 25% en pocos meses.",
-            "💉 Controlá tu presión regularmente aunque te sientas bien."
-        ]))
-
-    else:
-        st.info("Las recomendaciones personalizadas se habilitarán cuando el resultado sea **Hipertenso**.")
 
 
 # PESTAÑA 4: Informe de Proyecto
